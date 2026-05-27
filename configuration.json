@@ -2,27 +2,24 @@
     "logging": {
         "level": 20
     },
-
     "nfc": {
-        "path": "tty:USB0:pn532",
+        "path": "tty:AMA0:pn532",
         "broadcast": true
     },
-
     "hap": {
         "port": 51926,
         "persist": "hap.state",
         "default": "locked"
     },
-
     "homekey": {
         "persist": "homekey.json",
         "express": true,
         "finish": "black",
         "flow": "fast",
-        "name": "Garage Door Lock",
-        "manufacturer": "Unknown Manufacturer",
-        "serialNumber": "Unknown Serial Number",
-        "model": "Unknown Model",
+        "name": "Main Door",
+        "manufacturer": "Samsung",
+        "serialNumber": "-------------",
+        "model": "SHP-DP609",
         "firmware": "1.0"
     }
 }
