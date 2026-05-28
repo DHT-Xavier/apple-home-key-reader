@@ -5,6 +5,7 @@ import requests
 import threading
 import time
 import websockets.sync.client as ws_client
+from gpio_relay import GPIORelay
 
 log = logging.getLogger()
 
@@ -118,25 +119,36 @@ class HomeAssistant:
             self.send_lock_state_via_mqtt(lock_target_state)
 
     def set_lock_state_in_ha(self, lock_state):
-        log.info(f"Setting lock state to {lock_state} in HA")
-        service = "lock" if lock_state == 'locked' else "unlock"
+        log.info(f"Triggering relay")
+        self.gpio_success = False
+
         try:
-            url = f"{self.ha_server_address}/api/services/lock/{service}"
-            headers = {
-                "Authorization": f"Bearer {self.ha_api_token}",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "entity_id": self.ha_entity_id
-            }
-            response = requests.post(url, json=payload, headers=headers)
-            if response.status_code == 200:
-                log.info(f"Successfully set lock state to {lock_state}")
-            else:
-                log.error(f"Failed to set lock state to {lock_state}: {response.text}")
-                raise ConnectionError(f"Failed to set lock state to {lock_state}: {response.text}")
+            GPIORelay().trigger()
+            self.gpio_success = True
+            log.info(f"Successfully triggered relay")
         except Exception as e:
-            log.error(f"Error setting lock state in Home Assistant: {e}")
+            log.error(f"Error while trigger relay: {e}")
+
+        if(self.gpio_success != True):
+            log.info(f"Setting lock state to {lock_state} in HA")
+            service = "lock" if lock_state == 'locked' else "unlock"
+            try:
+                url = f"{self.ha_server_address}/api/services/lock/{service}"
+                headers = {
+                    "Authorization": f"Bearer {self.ha_api_token}",
+                    "Content-Type": "application/json",
+                }
+                payload = {
+                    "entity_id": self.ha_entity_id
+                }
+                response = requests.post(url, json=payload, headers=headers)
+                if response.status_code == 200:
+                    log.info(f"Successfully set lock state to {lock_state}")
+                else:
+                    log.error(f"Failed to set lock state to {lock_state}: {response.text}")
+                    raise ConnectionError(f"Failed to set lock state to {lock_state}: {response.text}")
+            except Exception as e:
+                log.error(f"Error setting lock state in Home Assistant: {e}")
 
     def start_listener_thread(self):
         # Start the listener in a separate thread
